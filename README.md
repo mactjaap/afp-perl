@@ -1,4 +1,4 @@
-### Net::AFP version 0.69
+### Net::AFP version 0.69 with a Chooser and AFP-Discover tool
 
 This collection of modules implements the Apple Filing Protocol stack in
 Perl. It contains several separate modules which implement components
