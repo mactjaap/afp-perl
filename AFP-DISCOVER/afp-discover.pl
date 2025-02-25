@@ -28,43 +28,22 @@ my $help = 0;
 
 # Parse command-line options
 GetOptions(
-    'fields|f=s@{1,}' => \@fields_to_display,  # Allow multiple values for --fields or -f
-    'help|h'          => \$help,               # Display help
+    'fields|f=s' => \@fields_to_display,  # Accept a comma-separated string
+    'help|h'     => \$help,               # Display help
 ) or pod2usage(2);
 
 # Display help if requested
 if ($help) {
-    # Check if perl-doc is installed
-    eval {
-        require Pod::Usage;
-        Pod::Usage->import();
-    };
-    if ($@) {
-        # Fallback help message if perl-doc is not installed
-        print <<"HELP";
-NAME
-    afp-discover.pl - Discover and display AFP (Apple Filing Protocol) service information.
-
-SYNOPSIS
-    afp-discover.pl [options]
-
-OPTIONS
-    -f, --fields <field1,field2,...>  Specify fields to display (comma-separated).
-    -h, --help                        Display this help message.
-
-DESCRIPTION
-    This script discovers AFP services over TCP (mDNS) and optionally over AppleTalk (if supported).
-    It displays information about the discovered services based on the specified fields.
-
-HELP
-        exit(0);
-    } else {
-        pod2usage({ -verbose => 2, -exitval => 0 });
-    }
+    pod2usage({ -verbose => 2, -exitval => 0 });
 }
 
 # If no fields are specified, use the default fields
 @fields_to_display = @default_fields unless @fields_to_display;
+
+# Split comma-separated fields into an array
+if (@fields_to_display && $fields_to_display[0] =~ /,/) {
+    @fields_to_display = split(/,/, $fields_to_display[0]);
+}
 
 # Check for AppleTalk support
 my $has_atalk = 0;
@@ -143,32 +122,12 @@ sub display_fields {
             } elsif (ref($srvInfo->{$field}) eq 'HASH') {
                 print Dumper($srvInfo->{$field});
             } else {
-
-                # Ensure UTF-8 encoding when printing UTF8ServerName
-
-                ####my $output_value = $srvInfo->{$field};
-                ####$output_value = encode("UTF-8", $output_value) if $field eq 'UTF8ServerName';
-                ####print $output_value, "\n";
-
-
-
-
-        use Encode;
-
-        my $output_value = $srvInfo->{$field};
-
+                my $output_value = $srvInfo->{$field};
                 if ($field eq 'UTF8ServerName') {
-                # Ensure it's properly decoded without breaking valid UTF-8 strings
-                $output_value = Encode::decode("UTF-8", $output_value) unless Encode::is_utf8($output_value);
+                    # Ensure it's properly decoded without breaking valid UTF-8 strings
+                    $output_value = Encode::decode("UTF-8", $output_value) unless Encode::is_utf8($output_value);
                 }
-
-        print $output_value, "\n";
-
-
-
-
-
-
+                print $output_value, "\n";
             }
         } else {
             print "$field: (Not available)\n";
@@ -176,3 +135,48 @@ sub display_fields {
     }
     print "\n";
 }
+
+__END__
+
+=head1 NAME
+
+afp-discover.pl - Discover and display AFP (Apple Filing Protocol) service information.
+
+=head1 SYNOPSIS
+
+afp-discover.pl [options]
+
+Options:
+    -f, --fields <field1,field2,...>  Specify fields to display (comma-separated).
+    -h, --help                        Display this help message.
+
+=head1 DESCRIPTION
+
+This script discovers AFP services over TCP (mDNS) and optionally over AppleTalk (if supported).
+It displays information about the discovered services based on the specified fields.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-f, --fields> <field1,field2,...>
+
+Specify the fields to display. Multiple fields can be specified as a comma-separated list.
+
+=item B<-h, --help>
+
+Display this help message.
+
+=back
+
+=head1 EXAMPLES
+
+Discover AFP services and display default fields:
+
+    ./afp-discover.pl
+
+Discover AFP services and display specific fields:
+
+    ./afp-discover.pl --fields ServerName,AFPVersions
+
+=cut
