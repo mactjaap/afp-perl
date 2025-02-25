@@ -1,5 +1,7 @@
 #!/usr/bin/bash
-# REPO6
+
+# to run installer do:
+# bash install.sh
 
 set -e  # Exit on any error
 
